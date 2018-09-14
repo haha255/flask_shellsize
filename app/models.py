@@ -4,7 +4,7 @@ from . import db
 class Pic_Table(db.Model):
     __tablename__ = 'pic_table'
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(64), unique=True)
+    filename = db.Column(db.String(64), unique=True, nullable=False)
     filedate = db.Column(db.DateTime)  # 文件生成的时间
     detectdate = db.Column(db.DateTime)  # 检测扇贝的时间
     fanshells = db.relationship('Fanshell_data', backref='pic_table')
