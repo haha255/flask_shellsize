@@ -4,10 +4,11 @@ from . import db
 class Pic_Table(db.Model):
     __tablename__ = 'pic_table'
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(64), unique=True, nullable=False)
+    filename = db.Column(db.String(64), unique=True, nullable=False)  # 保存的文件名
+    original_name = db.Column(db.String(64), nullable=True)  # 原始文件名
     filedate = db.Column(db.DateTime)  # 文件生成的时间
     detectdate = db.Column(db.DateTime)  # 检测扇贝的时间
-    fanshells = db.relationship('Fanshell_data', backref='pic_table')
+    fanshells = db.relationship('Fanshell_data', backref='pic')
 
     def __repr__(self):
         return '<Filename: %r>' % self.filename
@@ -19,7 +20,7 @@ class Fanshell_data(db.Model):
     shell_no = db.Column(db.Integer)  # 一张纸上的扇贝编号
     shell_height = db.Column(db.Integer)  # 扇贝的高
     shell_width = db.Column(db.Integer)  # 扇贝的宽度
-    shell_similar = db.Column(db.Numeric(3, 2))  # 扇贝的相似度
+    shell_similar = db.Column(db.REAL)  # 扇贝的相似度
     shell_area = db.Column(db.Integer)  # 扇贝的面积
     pic_id = db.Column(db.Integer, db.ForeignKey('pic_table.id'))
 
