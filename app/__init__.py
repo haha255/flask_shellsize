@@ -1,9 +1,10 @@
-from flask import Flask, render_template
+from flask import Flask
 from flask_bootstrap import Bootstrap
 from config import config
 from flask_sqlalchemy import SQLAlchemy
 from .main import main as main_blueprint
 
+__author__ = '刘永海'
 bootstrap = Bootstrap()
 db = SQLAlchemy()
 
