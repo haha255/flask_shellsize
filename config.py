@@ -9,6 +9,8 @@ class Config:
     UPLOADED_PHOTOS_DEST = os.path.join(basedir, 'uploads')  # 文件上传路径
     FINISHED_FOLDER = os.path.join(basedir, 'uploads/finished')  # 文件识别后保存的路径
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])  # 允许上传的文件类型。
+    DEBUG = True
     @staticmethod
     def init_app(app):
         pass

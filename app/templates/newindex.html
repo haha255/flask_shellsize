@@ -1,13 +1,33 @@
 {% extends 'basic_common/mybase.html' %}
 {% block content %}
-    <h4>请选择照片</h4>
-    <form method="POST" role="form" action="{{ url_for('.index') }}" enctype="multipart/form-data">
-        {{ form.hidden_tag() }}
-        {{ form.pics(class='file') }}
-    </form>
-    <div class="row">
-        <div class="col-lg-3 col-md-4 col-sm-6">
-            <div class="card "
+    <div class="container">
+        <h4>请选择照片</h4>
+        <form method="POST" role="form" action="{{ url_for('.index') }}" enctype="multipart/form-data">
+            {{ form.csrf_token }}
+            {{ form.hidden_tag() }}
+            {{ form.pics(class='file', id='input-1') }}
+        </form>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">Page...
+                    <small>Text</small>
+                </h1>
+            </div>
+        </div>
+        <div class="row">
+            {% for _ in range(4) %}
+                <div class="col-md-3">
+                    <a href="#">
+                        <img class="img-responsive" src="http://placehold.it/750x450" alt="">
+                    </a>
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr><th style="width: 50px">编号</th><th style="width: 80px">扇贝高</th><th style="width: 80px">扇贝宽</th><th style="width: 80px">相似度</th><th style="width: 80px">面积</th></tr>
+                        </thead>
+                    </table>
+                </div>
+            {% endfor %}
         </div>
     </div>
 {% endblock %}
