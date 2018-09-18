@@ -11,7 +11,7 @@ def index():
         if form.validate_on_submit():
             pass
         return redirect(url_for('.index'))
-    return render_template('index.html', form=form)
+    return render_template('newindex.html', form=form)
 
 
 @main.route('/ex2', methods=['GET', 'POST'])

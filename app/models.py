@@ -8,6 +8,7 @@ class Pic_Table(db.Model):
     original_name = db.Column(db.String(64), nullable=True)  # 原始文件名
     filedate = db.Column(db.DateTime)  # 文件生成的时间
     detectdate = db.Column(db.DateTime)  # 检测扇贝的时间
+    picmd5 = db.Column(db.String(32))  # 计算图片的MD5值，记录下来。
     fanshells = db.relationship('Fanshell_data', backref='pic')
 
     def __repr__(self):
