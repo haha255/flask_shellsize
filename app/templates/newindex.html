@@ -1,4 +1,6 @@
 {% extends 'basic_common/mybase.html' %}
+{% import 'basic_common/_macros.html' as macros %}
+
 {% block content %}
     <div class="container">
         <h4>请选择照片</h4>
@@ -7,27 +9,37 @@
             {{ form.hidden_tag() }}
             {{ form.pics(class='file', id='input-1') }}
         </form>
-
-        <div class="row">
+        <hr>
+        <!--分页导航-->
+        <div class="row text-center">
             <div class="col-lg-12">
-                <h1 class="page-header">Page...
-                    <small>Text</small>
-                </h1>
+                {{ macros.pagination_widget(pagination, '.index') }}
             </div>
         </div>
-        <div class="row">
-            {% for _ in range(4) %}
-                <div class="col-md-3">
-                    <a href="#">
-                        <img class="img-responsive" src="http://placehold.it/750x450" alt="">
-                    </a>
-                    <table class="table table-bordered">
-                        <thead>
-                        <tr><th style="width: 50px">编号</th><th style="width: 80px">扇贝高</th><th style="width: 80px">扇贝宽</th><th style="width: 80px">相似度</th><th style="width: 80px">面积</th></tr>
-                        </thead>
-                    </table>
+
+        {% for pic in pics %}
+            {% if loop.first %}
+                <div class="row">
+            {% endif %}
+            {% if loop.index % 4 == 0 %}
+                {{ macros.make_pics(pic) }}
                 </div>
-            {% endfor %}
+                {% if not loop.last %}
+                    <div class="row">
+                {% endif %}
+            {% else %}
+                {{ macros.make_pics(pic) }}
+            {% endif %}
+            {% if loop.last and loop.length % 4 != 0 %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <hr>
+    <!--分页导航-->
+    <div class="row text-center">
+        <div class="col-lg-12">
+            {{ macros.pagination_widget(pagination, '.index') }}
         </div>
     </div>
 {% endblock %}

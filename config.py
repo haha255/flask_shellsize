@@ -10,7 +10,8 @@ class Config:
     FINISHED_FOLDER = os.path.join(basedir, 'uploads/finished')  # 文件识别后保存的路径
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])  # 允许上传的文件类型。
-    DEBUG = True
+    PICS_PER_PAGE = 8  # 每页显示的照片数
+    DEBUG = False
     @staticmethod
     def init_app(app):
         pass

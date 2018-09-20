@@ -1,0 +1,43 @@
+{% macro pagination_widget(pagination, endpoint) %}
+    <ul class="pagination">
+        <li{% if not pagination.has_prev %} class="disabled"{% endif %}>
+            <a href="{% if pagination.has_prev %}{{ url_for(endpoint,
+                    page = pagination.page - 1, **kwargs)}}{% else %}#{% endif %}">&laquo;</a>
+        </li>
+        {% for p in pagination.iter_pages() %}
+            {% if p %}
+                {% if p == pagination.page %}
+                    <li class="active">
+                {% else %}
+                    <li>
+                {% endif %}
+                 <a href="{{ url_for(endpoint, page=p, **kwargs) }}">{{ p }}</a>
+                    </li>
+            {% else %}
+                <li class="disabled"><a href="#">&hellip;</a></li>
+            {% endif %}
+        {% endfor %}
+        <li{% if not pagination.has_next %} class="disabled"{% endif %}>
+            <a href="{% if pagination.has_next %}{{ url_for(endpoint, page=pagination.page + 1, **kwargs) }}{% else %}#{% endif %}">&raquo;</a>
+        </li>
+    </ul>
+{% endmacro %}
+{% macro make_pics(pic) %}
+    <div class="col-md-3">
+        <h7>照片名：{{ pic.original_name | truncate(28, True) }}</h7>
+        <a href="{{ url_for('main.getfinishedpic', filename=pic.filename) }}">
+            <img class="img-responsive" src="{{ url_for('main.getfinishedpic', filename=pic.filename) }}" alt="">
+        </a>
+
+        <table class="table table-bordered">
+            <thead>
+            <tr><th style="width: 50px">No.</th><th style="width: 80px">高</th><th style="width: 80px">长</th><th style="width: 80px">相似</th><th style="width: 80px">面积</th></tr>
+            {% for fan in pic.fanshells %}
+                <tr>
+                    <td>{{ fan.shell_no|round(1) }}</td><td>{{ fan.shell_height|round(1) }}</td><td>{{ fan.shell_width|round(1) }}</td><td>{{ '%.1f%%' % (fan.shell_similar * 100) }}</td><td>{{ fan.shell_area|round(1) }}</td>
+                </tr>
+            {% endfor %}
+            </thead>
+        </table>
+    </div>
+{% endmacro %}

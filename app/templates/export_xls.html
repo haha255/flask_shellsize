@@ -1,0 +1,25 @@
+{% extends './basic_common/mybase.html' %}
+{% import './basic_common/_macros.html' as macros %}
+
+{% block content %}
+    <div class="container">
+        <form method="POST" role="form" action="{{ url_for('.export_xls') }}">
+            {{ form.csrf_token() }}
+            {{ form.hidden_tag() }}
+            {{ form.makexls }}
+            {% for p in pics %}
+                <div class="row">
+                    <div class="">
+                        {{ form.checked }}
+                    </div>
+                    <div class="">
+                        <img src="{{ url_for('main.getfinishedpic', filename=p.filename) }}" width="300">
+                    </div>
+                    <div class="col-sm-2">
+                        wahahahahah
+                    </div>
+                </div>
+            {% endfor %}
+        </form>
+    </div>
+{% endblock content %}

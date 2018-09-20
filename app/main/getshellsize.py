@@ -10,13 +10,14 @@ class GetShellSize:
         self.fn = fn
         self.papersize = (297, 210)  # 纸张大小，毫米单位，宽边（大值）在前。
         self.rate = 0  # 像素与纸张毫米的比率 毫米数/像素数
+        self.img = []
         if self.fn != '':
-            self.loadPic(self.fn)
+            img = self.loadPic(self.fn)
 
     def loadPic(self, fn):
         self.fn = fn
-        img = cv2.imread(self.fn)
-        return img
+        self.img = cv2.imread(self.fn)
+        return self.img
         '''self.image = cv2.imread(self.fn)  # 直接处理，我们对原始照片不感兴趣，更希望得到A4纸张部分，因此直接处理并覆盖
         self.height, self.width = self.image.shape[:2]  # 图片的宽和高
         self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
@@ -124,7 +125,7 @@ class GetShellSize:
         dst = cv2.warpPerspective(img, M, (dis_ab, dis_ad))  # 透视变换
         return dst
 
-    def detect_shell(self, img, maxnum=8, sim=0.9):
+    def detect_shell(self, img, maxnum=10, sim=0.8):
         h, w = img.shape[:2]
         tmpmax, tmpmin = self.papersize
         if tmpmax < tmpmin:
@@ -184,7 +185,7 @@ class GetShellSize:
             cv2.circle(img, line_2p[3], 4, (0, 255, 255), -1)
             shell_h, shell_w = self.linelength(line_2p[0], line_2p[1]) * self.rate, self.linelength(line_2p[2], line_2p[3]) * self.rate
             cv2.putText(img, 'No:{0}'.format(len(count) + 1), (cx, cy), cv2.FONT_HERSHEY_DUPLEX, 0.6, (0, 255, 255))
-            cv2.putText(img, 'H:{0:.1f}W:{1:.1f}'.format(shell_h, shell_w), (cx, cy + 20), cv2.FONT_HERSHEY_DUPLEX, 0.6, (0, 255, 255))
+            cv2.putText(img, 'H:{0:.1f}L:{1:.1f}'.format(shell_h, shell_w), (cx, cy + 20), cv2.FONT_HERSHEY_DUPLEX, 0.6, (0, 255, 255))
             cv2.putText(img, 'S:{:.1%}'.format(similar), (cx, cy + 40), cv2.FONT_HERSHEY_DUPLEX, 0.6, (0, 255, 255))
             count.append([shell_h, shell_w, similar, M['m00']/100 * self.rate**2])  # 检测到这里，可以认为找到了扇贝，计数器可以加一了
             if len(count) >= maxnum:
@@ -225,40 +226,83 @@ class GetShellSize:
             p_f = (int(p_a[0] - math.cos(radian_90) * dis_f), int(p_a[1] + math.sin(radian_90) * dis_f))
             return p_c, p_d, p_e, p_f
 
-    def pic_resize(self, img, newsize, preserve=1):  # 调整尺寸，第三个参数是是否保持比例，默认保持，若保持时，newsize的第一个参数起作用
+    def pic_resize(self, img, newsize, preserve=1):  # 调整尺寸，第三个参数是是否保持比例，默认保持，若保持时，newsize的第二个值起作用
         h, w = img.shape[:2]
         h1, w1 = newsize
         if preserve == 1:
-            w1 = int(h1 * w / h)
+            #w1 = int(h1 * w / h)
+            h1 = int(w1 * h /w)
         dst = cv2.resize(img, (w1, h1))
         return dst
 
-    def test(self):
-        print(self.width, self.height)
+    def rotate_bound(self, img, angle=90):  # 旋转任意角度
+        h, w = img.shape[:2]  # 图像尺寸
+        cX, cY = w // 2, h // 2  # 取图像中心
+        M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
+        cos, sin = np.abs(M[0, 0]), np.abs(M[0, 1])
+        nW, nH = int((h * sin) + (w * cos)), int((h * cos) + (w * sin))
+        M[0, 2] += (nW / 2) - cX
+        M[1, 2] += (nH / 2) - cY
+        return cv2.warpAffine(img, M, (nW, nH))
+
+    def save_pic(self, img, path):
+        cv2.imwrite(path, img)
+
+    def rotate_90(self, img):  # 旋转90度
+        return np.rot90(img).copy()
+
+    def auto_detect(self, img=None, maxwidth=800, drawtxt=1, drawline=1):  # 根据给定的扇贝图片，自动识别纸张、扇贝
+        '''返回值：正确 1, 扇贝最终图，扇贝数据列表， 0, img, None 表明只识别到扇贝纸张，未识别到扇贝数据，发回纸张图， -1, 原图像, None，完全未识别'''
+        if img == None:
+            if self.img.any() != None:
+                img = self.img
+            else:
+                return -2, None, None
+        h, w = img.shape[:2]  # 图像尺寸
+        if w > 1000:
+            img = self.pic_resize(img, (0, 1000))  # 最大边的值
+            h, w = img.shape[:2]
+        ret, approx, box = self.detect_rect(img)
+        if not ret:
+            if h > w:
+                img = self.rotate_90(img)
+            img = self.pic_resize(img, (0, maxwidth))
+            h, w = img.shape[:2]
+            cv2.putText(img, 'No A4 Paper Detected!', (w // 2, h // 2), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255))
+            return -1, img, None  # 没有检测到白纸，直接返回完全未识别
+        else:
+            dst = self.transform(img, approx, box)  # 进行变形操作
+            h, w = dst.shape[:2]
+            if h > w:
+                dst = self.rotate_90(dst)
+                h, w = dst.shape[:2]  # 如果是竖着的，改成横向
+            sd, final = self.detect_shell(dst)  # 检测扇贝
+            if len(sd) <= 0:
+                dst = self.pic_resize(dst, (0, maxwidth))  # 进行图片缩放
+                h, w = dst.shape[:2]
+                cv2.putText(dst, 'No Scallop Detected!', (w // 2, h // 2), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255))
+                return 0, dst, None  # 没有检测到扇贝，返回修正后的白纸照片
+            else:
+                rate = 297 / w * 0.5 + 210 / h * 0.5
+                final = self.pic_resize(final, (0, maxwidth))
+                # sd = np.array(sd)
+                # sd[:, [0, 1]] = sd[:, [0, 1]] * rate  # 前2列高和宽
+                # sd[:, 3] = sd[:, 3] * rate ** 2 / 100  # 面积
+                if drawtxt == 1:
+                    xx, yy = 10, 20
+                    for index, value in enumerate(sd):
+                        text = ': H={0:.1f}mm, L={1:.1f}mm, S={2:.1%}, Area={3:.1f}cm2'.format(value[0], value[1],
+                                                                                               value[2], value[3])
+                        cv2.putText(final, str(index + 1) + text, (xx, yy), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 0, 0))
+                        yy += 25
+                    cv2.putText(final, 'Paper Size: {0:.1f}*{1:.1f}'.format(w * rate, h * rate), (xx, yy),
+                                cv2.FONT_HERSHEY_DUPLEX, 0.6,
+                                (255, 0, 0))
+                return 1, final, sd
 
 if __name__ == '__main__':
-    shells = GetShellSize()
-    fn = 'timg_26.jpg'
-    img = cv2.imread('./pic/' + fn)
-    img = shells.pic_resize(img, (1200, 400))
-    ret, approx, box = shells.detect_rect(img)
-    if not ret:
-        print('没有检测到白色垫纸！')
-    else:
-        dst = shells.transform(img, approx, box)
-        sd, final = shells.detect_shell(dst)
-        if len(sd) <= 0:
-            print('没有检测到扇贝！')
-            exit(0)
-        else:
-            xx, yy = 10, 20
-            for index, value in enumerate(sd):
-                text = 'No:{0}: Height={1:.1f}mm, Width={2:.1f}mm, Similar={3:.1%}, Area={4:.1f}cm2'.format(index + 1, value[0], value[1], value[2], value[3])
-                cv2.putText(final, text, (xx, yy), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 0, 0))
-                yy += 25
-            # cv2.putText(final, 'Paper Size: {0}*{1}'.format(hh, ww), (xx, yy), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 0, 0))
-        show = shells.pic_resize(final, (800, 0))
-        cv2.imshow('show', show)
-        cv2.imwrite('./finish/' + fn.split('.')[0] + 'xxx.jpg', final)
-        cv2.waitKey()
-        cv2.destroyAllWindows()
+    shells = GetShellSize('./pic/timg_26.jpg')
+    _, show, _ = shells.auto_detect()
+    cv2.imshow('show', show)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
