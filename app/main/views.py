@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, current_app, send_from_directory
+from flask import render_template, request, redirect, url_for, current_app, send_from_directory, make_response
 from . import main
 from . import forms
 import datetime
@@ -7,6 +7,7 @@ import os
 from werkzeug.utils import secure_filename
 from ..models import Pic_Table, Fanshell_data, db
 import hashlib
+from .gen_xls import gen_xls
 
 
 def allowed_file(filename):
@@ -57,12 +58,27 @@ def index():
 def export_xls():
     form = forms.xlsForm()
     if request.method == 'POST':
-        selected = form.checked.data
-        for sl in selected:
-            pass
+        checked = request.form.getlist('checked')
+        fans = []
+        for sel in checked:
+            pic = Pic_Table.query.filter(Pic_Table.id == sel).first()  # 取当前照片
+            for p in pic.fanshells:
+                fans.append(['{0:.1f}mm'.format(p.shell_height),
+                             '{0:.1f}mm'.format(p.shell_width),
+                             '{0:.1%}'.format(p.shell_similar),
+                             '{0:.1f}c㎡'.format(p.shell_area),
+                             pic.original_name])
+        if len(fans) > 0:  # 有数据
+            wb = gen_xls(['壳高', '壳长', '相似度', '扇贝面积', '文件名称'], fans)
+            newfname = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f') + '.xlsx'  # 新文件名
+            wb.save(os.path.join(current_app.config['EXCEL_FOLDER'], newfname))
+            response = make_response(send_from_directory(current_app.config['EXCEL_FOLDER'], newfname, as_attachment=True))
+            response.headers['Content-Disposition'] = "attachment; filename={}".format(newfname.encode().decode('latin-1'))
+            response.headers['Content-Type'] = 'application/octet-stream'
+            return response
         return redirect(url_for('.export_xls'))
     page = request.args.get('page', 1, type=int)
-    pagination = Pic_Table.query.order_by(Pic_Table.detectdate.desc(), Pic_Table.id.desc()).paginate(page, per_page=current_app.config['PICS_PER_PAGE'], error_out=False)
+    pagination = Pic_Table.query.filter(Pic_Table.fanshells.any()).order_by(Pic_Table.detectdate.desc(), Pic_Table.id.desc()).paginate(page, per_page=24, error_out=False)
     pics = pagination.items
     return render_template('export_xls.html', form=form, pagination=pagination, pics=pics)
 

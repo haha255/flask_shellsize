@@ -7,19 +7,36 @@
             {{ form.csrf_token() }}
             {{ form.hidden_tag() }}
             {{ form.makexls }}
-            {% for p in pics %}
-                <div class="row">
-                    <div class="">
-                        {{ form.checked }}
-                    </div>
-                    <div class="">
-                        <img src="{{ url_for('main.getfinishedpic', filename=p.filename) }}" width="300">
-                    </div>
-                    <div class="col-sm-2">
-                        wahahahahah
-                    </div>
+            <hr>
+            {# 分页导航 #}
+            <div class="row text-center">
+                <div class="col-lg-12">
+                    {{ macros.pagination_widget(pagination, '.index') }}
                 </div>
+            </div>
+            {% for pic in pics %}
+                {% if loop.first %}
+                    <div class="row">
+                {% endif %}
+                {% if loop.index % 4 == 0 %}
+                    {{ macros.make_pics2(pic, form.checked(value=pic.id)) }}
+                    </div>
+                    {% if not loop.last %}
+                        <div class="row">
+                    {% endif %}
+                {% else %}
+                    {{ macros.make_pics2(pic, form.checked(value=pic.id)) }}
+                {% endif %}
+                {% if loop.last and loop.length % 4 != 0 %}
+                    </div>
+                {% endif %}
             {% endfor %}
+            {# 分页导航 #}
+            <div class="row text-center">
+                <div class="col-lg-12">
+                    {{ macros.pagination_widget(pagination, '.index') }}
+                </div>
+            </div>
         </form>
     </div>
 {% endblock content %}

@@ -24,7 +24,7 @@
 {% endmacro %}
 {% macro make_pics(pic) %}
     <div class="col-md-3">
-        <h7>照片名：{{ pic.original_name | truncate(28, True) }}</h7>
+        <h7>照片名：{{ pic.original_name | truncate(25, True) }}</h7>
         <a href="{{ url_for('main.getfinishedpic', filename=pic.filename) }}">
             <img class="img-responsive" src="{{ url_for('main.getfinishedpic', filename=pic.filename) }}" alt="">
         </a>
@@ -39,5 +39,14 @@
             {% endfor %}
             </thead>
         </table>
+    </div>
+{% endmacro %}
+
+{% macro make_pics2(pic, checkbox) %}
+    <div class="col-md-3">
+        <img class="img-responsive" src="{{ url_for('main.getfinishedpic', filename=pic.filename) }}" alt="">
+        {{ checkbox }}
+{#        <input id="{{ pic.id }}" name="{{ pic.id }}" type="checkbox" value="n">#}
+        此图识别扇贝 {{ pic.fanshells|count }} 只
     </div>
 {% endmacro %}
